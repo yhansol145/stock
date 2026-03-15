@@ -31,6 +31,11 @@ document.addEventListener('mouseout', (e) => {
   }
 });
 
+document.addEventListener('scroll', () => {
+  gTooltip.classList.remove('visible');
+  tooltipTarget = null;
+}, true);
+
 // ─── 상태 ───────────────────────────────────────────────
 let allStocks = [];       // 서버에서 받은 전체 종목 (필터 전)
 let currentMarket = 'ALL';
@@ -273,6 +278,17 @@ function renderDetail(d) {
     fill.style.background = color;
     dot.style.left = `${rsi}%`;
     dot.style.background = color;
+
+    const zone = rsi < 30 ? '과매도 구간 — 반등 가능성'
+               : rsi < 40 ? '저평가 구간'
+               : rsi < 60 ? '중립 구간'
+               : rsi < 70 ? '고평가 구간'
+               : '과매수 구간 — 조정 가능성';
+    document.getElementById('ind-rsi-bar').setAttribute(
+      'data-tip',
+      `RSI 위치: ${rsi} / 100\n\n현재 구간: ${zone}\n\n← 과매도(0)  ·····  중립  ·····  과매수(100) →`
+    );
+    document.getElementById('ind-rsi-bar').classList.add('has-tip');
   }
 
   // MACD
