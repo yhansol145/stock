@@ -37,10 +37,23 @@
     <section class="section">
       <div class="stocks-header">
         <h2 class="section-title">종목 분석</h2>
-        <div class="filter-tabs">
-          <button class="tab active" onclick="filterMarket('ALL', this)">전체</button>
-          <button class="tab" onclick="filterMarket('KOSPI', this)">KOSPI</button>
-          <button class="tab" onclick="filterMarket('KOSDAQ', this)">KOSDAQ</button>
+        <div class="stocks-controls">
+          <div class="search-wrap">
+            <span class="search-icon">⌕</span>
+            <input
+              id="search-input"
+              class="search-input"
+              type="text"
+              placeholder="종목명 검색"
+              oninput="onSearch(this.value)"
+            />
+            <button id="search-clear" class="search-clear hidden" onclick="clearSearch()">✕</button>
+          </div>
+          <div class="filter-tabs">
+            <button class="tab active" onclick="filterMarket('ALL', this)">전체</button>
+            <button class="tab" onclick="filterMarket('KOSPI', this)">KOSPI</button>
+            <button class="tab" onclick="filterMarket('KOSDAQ', this)">KOSDAQ</button>
+          </div>
         </div>
       </div>
       <div class="table-wrapper">
