@@ -216,6 +216,40 @@ main { max-width: 1280px; margin: 0 auto; padding: 24px; display: flex; flex-dir
 @media (max-width: 768px) { .news-grid { grid-template-columns: 1fr; } }
 
 /* ─── Loading Row ─── */
+/* ─── Group Header ─── */
+tr.group-header td {
+  background: var(--surface2);
+  color: var(--text-muted);
+  font-size: 11px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.6px;
+  padding: 6px 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+/* ─── Sortable Columns ─── */
+.sortable { cursor: pointer; user-select: none; }
+.sortable:hover { color: var(--text); }
+.sort-icon { font-size: 11px; color: var(--text-muted); margin-left: 2px; }
+.sort-active { color: var(--blue) !important; }
+.sort-active .sort-icon { color: var(--blue); }
+
+/* ─── Pagination ─── */
+.pagination {
+  display: flex; align-items: center; justify-content: center;
+  gap: 6px; padding: 12px 16px;
+}
+.page-btn {
+  background: transparent; border: 1px solid var(--border);
+  color: var(--text-muted); min-width: 32px; height: 30px;
+  padding: 0 8px; border-radius: var(--radius);
+  cursor: pointer; font-size: 13px; transition: all .2s;
+}
+.page-btn:hover:not(:disabled) { border-color: var(--blue); color: var(--blue); }
+.page-btn.active { background: var(--blue); border-color: var(--blue); color: #fff; cursor: default; }
+.page-btn:disabled { opacity: 0.3; cursor: default; }
+.page-info { font-size: 12px; color: var(--text-muted); margin-right: 6px; }
+
+/* ─── Loading Row ─── */
 .loading-row { text-align: center; padding: 40px; color: var(--text-muted); }
 
 /* ─────────────────────────────────────────

@@ -75,10 +75,10 @@
         <table class="stocks-table">
           <thead>
             <tr>
-              <th>종목</th>
-              <th class="right">현재가</th>
-              <th class="right">등락률</th>
-              <th class="right">거래량</th>
+              <th class="sortable" data-sort="name" onclick="toggleSort('name')">종목 <span class="sort-icon">↕</span></th>
+              <th class="right sortable" data-sort="price" onclick="toggleSort('price')">현재가 <span class="sort-icon">↕</span></th>
+              <th class="right sortable" data-sort="changePercent" onclick="toggleSort('changePercent')">등락률 <span class="sort-icon">↕</span></th>
+              <th class="right sortable" data-sort="volume" onclick="toggleSort('volume')">거래량 <span class="sort-icon">↕</span></th>
               <th class="center has-tip" data-tip="RSI (상대강도지수)&#10;&#10;주가 상승/하락의 속도를 0~100으로 측정합니다.&#10;&#10;• 30 이하  →  과매도 (반등 가능성)&#10;• 30~40  →  저평가 구간&#10;• 40~60  →  중립&#10;• 60~70  →  고평가 구간&#10;• 70 이상  →  과매수 (조정 가능성)&#10;&#10;기간: 14일">RSI ⓘ</th>
               <th class="center has-tip" data-tip="MACD (이동평균 수렴·확산)&#10;&#10;단기(12일)와 장기(26일) 지수이동평균의 차이입니다.&#10;&#10;• 히스토그램 > 0  →  상승 모멘텀&#10;• 히스토그램 < 0  →  하락 모멘텀&#10;• MACD > Signal  →  골든크로스 (매수)&#10;• MACD < Signal  →  데드크로스 (매도)">MACD ⓘ</th>
               <th class="right has-tip" data-tip="이동평균 (MA, Moving Average)&#10;&#10;일정 기간의 평균 종가로 추세를 파악합니다.&#10;&#10;• 현재가 > MA20  →  단기 상승 추세&#10;• 현재가 < MA20  →  단기 하락 추세">MA20 ⓘ</th>
@@ -88,6 +88,13 @@
           <tbody id="stocks-tbody">
             <tr><td colspan="8" class="loading-row">데이터 로딩 중...</td></tr>
           </tbody>
+          <tfoot>
+            <tr>
+              <td colspan="8">
+                <div id="pagination" class="pagination"></div>
+              </td>
+            </tr>
+          </tfoot>
         </table>
       </div>
     </section>
