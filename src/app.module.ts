@@ -5,6 +5,7 @@ import { join } from 'path';
 import { StockModule } from './stock/stock.module';
 import { MarketModule } from './market/market.module';
 import { NewsModule } from './news/news.module';
+import { RecommendationModule } from './recommendation/recommendation.module';
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { NewsModule } from './news/news.module';
     StockModule,
     MarketModule,
     NewsModule,
+    RecommendationModule,
   ],
 })
 export class AppModule {}

@@ -88,6 +88,90 @@ async function loadAll() {
     '업데이트: ' + new Date().toLocaleTimeString('ko-KR');
 }
 
+// ─── AI 종목 추천 ─────────────────────────────────────────
+async function loadRecommendations() {
+  const section = document.getElementById('rec-section');
+  const grid    = document.getElementById('rec-grid');
+  const summary = document.getElementById('rec-summary');
+  const btn     = document.getElementById('rec-btn');
+
+  btn.disabled = true;
+  btn.textContent = '분석 중...';
+  grid.innerHTML  = '<div class="rec-loading">AI가 주식 데이터와 뉴스를 분석하고 있습니다...</div>';
+  summary.textContent = '';
+  section.classList.remove('hidden');
+
+  try {
+    const res  = await fetch('/recommendations');
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.message || '추천 생성 실패');
+    }
+    const data = await res.json();
+
+    summary.textContent = data.summary;
+
+    // 상세 모달용으로 저장
+    window._recData = data.recommendations;
+
+    grid.innerHTML = data.recommendations.map((r) => `
+      <div class="rec-card" onclick="openRecModal(${r.rank - 1})" style="cursor:pointer">
+        <div class="rec-rank">${r.rank}</div>
+        <div class="rec-info">
+          <div class="rec-name">${r.name}</div>
+          <div class="rec-meta">
+            <span class="rec-ticker">${r.ticker}</span>
+            <span class="rec-sector">${r.sector}</span>
+          </div>
+          <div class="rec-reason">${r.reason}</div>
+          <div class="rec-detail-hint">클릭하여 상세 분석 보기 →</div>
+        </div>
+      </div>`).join('');
+
+    const ts = new Date(data.generatedAt).toLocaleTimeString('ko-KR');
+    document.getElementById('rec-time').textContent = `생성: ${ts}`;
+  } catch (e) {
+    grid.innerHTML = `<div class="rec-error">오류: ${e.message}</div>`;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '↻ 다시 분석';
+  }
+}
+
+// ─── 추천 상세 모달 ───────────────────────────────────────
+function openRecModal(idx) {
+  const r = (window._recData ?? [])[idx];
+  if (!r) return;
+
+  window._recCurrentTicker = r.ticker;
+
+  document.getElementById('rec-modal-name').textContent      = r.name;
+  document.getElementById('rec-modal-ticker').textContent    = r.ticker;
+  document.getElementById('rec-modal-sector').textContent    = r.sector;
+  document.getElementById('rec-modal-reason').textContent    = r.reason;
+  document.getElementById('rec-modal-market').textContent    = r.detail?.marketAnalysis    ?? '-';
+  document.getElementById('rec-modal-technical').textContent = r.detail?.technicalAnalysis ?? '-';
+  document.getElementById('rec-modal-news').textContent      = r.detail?.newsImpact        ?? '-';
+  document.getElementById('rec-modal-risk').textContent      = r.detail?.riskFactors       ?? '-';
+
+  document.getElementById('rec-modal-overlay').classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+}
+
+function openDetailFromRec() {
+  const ticker = window._recCurrentTicker;
+  if (!ticker) return;
+  // rec 모달 닫고 주식 상세 모달 열기
+  document.getElementById('rec-modal-overlay').classList.add('hidden');
+  openDetail(ticker);
+}
+
+function closeRecModal(e) {
+  if (e && e.target !== document.getElementById('rec-modal-overlay')) return;
+  document.getElementById('rec-modal-overlay').classList.add('hidden');
+  document.body.style.overflow = '';
+}
+
 // ─── 뉴스 ────────────────────────────────────────────────
 async function loadNews() {
   const setLoading = (id) => {
