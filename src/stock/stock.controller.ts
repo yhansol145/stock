@@ -1,12 +1,14 @@
 import { Controller, Get, Param, Query } from '@nestjs/common';
 import { GetStockListUseCase } from './usecases/get-stock-list.usecase';
 import { GetStockDetailUseCase } from './usecases/get-stock-detail.usecase';
+import { SearchStocksUseCase } from './usecases/search-stocks.usecase';
 
 @Controller('stocks')
 export class StockController {
   constructor(
     private readonly getStockListUseCase: GetStockListUseCase,
     private readonly getStockDetailUseCase: GetStockDetailUseCase,
+    private readonly searchStocksUseCase: SearchStocksUseCase,
   ) {}
 
   /**
@@ -18,6 +20,15 @@ export class StockController {
   @Get()
   getStockList(@Query('market') market?: 'KOSPI' | 'KOSDAQ') {
     return this.getStockListUseCase.execute(market);
+  }
+
+  /**
+   * GET /stocks/search?query=삼성
+   * 종목명 regex 검색
+   */
+  @Get('search')
+  searchStocks(@Query('query') query: string) {
+    return this.searchStocksUseCase.execute(query);
   }
 
   /**

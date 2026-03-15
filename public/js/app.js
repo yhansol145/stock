@@ -32,8 +32,9 @@ document.addEventListener('mouseout', (e) => {
 });
 
 // ─── 상태 ───────────────────────────────────────────────
-let allStocks = [];
+let allStocks = [];       // 서버에서 받은 전체 종목 (필터 전)
 let currentMarket = 'ALL';
+let currentQuery = '';
 let priceChart = null;
 
 // ─── 유틸 ────────────────────────────────────────────────
@@ -73,7 +74,7 @@ const signalBadge = (signal, extraCls = 'signal-badge') => {
 // ─── 전체 로드 ───────────────────────────────────────────
 async function loadAll() {
   document.getElementById('last-updated').textContent = '로딩 중...';
-  await Promise.all([loadMarket(), loadStocks(currentMarket)]);
+  await Promise.all([loadMarket(), loadStocks()]);
   document.getElementById('last-updated').textContent =
     '업데이트: ' + new Date().toLocaleTimeString('ko-KR');
 }
@@ -116,19 +117,50 @@ async function loadMarket() {
 }
 
 // ─── 종목 목록 ───────────────────────────────────────────
-async function loadStocks(market = 'ALL') {
+async function loadStocks() {
   const tbody = document.getElementById('stocks-tbody');
   tbody.innerHTML = '<tr><td colspan="8" class="loading-row">데이터 로딩 중...</td></tr>';
 
   try {
-    const url = market === 'ALL' ? '/stocks' : `/stocks?market=${market}`;
-    const res = await fetch(url);
+    const res = await fetch('/stocks');
     const data = await res.json();
     allStocks = data.stocks ?? [];
-    renderStocks(allStocks);
+    applyFilters();
   } catch (e) {
     tbody.innerHTML = `<tr><td colspan="8" class="loading-row" style="color:var(--red)">데이터 로드 실패: ${e.message}</td></tr>`;
   }
+}
+
+function applyFilters() {
+  let filtered = allStocks;
+
+  if (currentMarket !== 'ALL') {
+    filtered = filtered.filter(s => s.market === currentMarket);
+  }
+
+  if (currentQuery) {
+    try {
+      const regex = new RegExp(currentQuery, 'i');
+      filtered = filtered.filter(s => regex.test(s.name));
+    } catch {
+      // 유효하지 않은 regex는 무시
+    }
+  }
+
+  renderStocks(filtered);
+}
+
+function onSearch(value) {
+  currentQuery = value.trim();
+  document.getElementById('search-clear').classList.toggle('hidden', !currentQuery);
+  applyFilters();
+}
+
+function clearSearch() {
+  const input = document.getElementById('search-input');
+  input.value = '';
+  onSearch('');
+  input.focus();
 }
 
 function renderStocks(stocks) {
@@ -171,7 +203,7 @@ function filterMarket(market, btn) {
   currentMarket = market;
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   btn.classList.add('active');
-  loadStocks(market);
+  applyFilters();
 }
 
 // ─── 종목 상세 모달 ──────────────────────────────────────
