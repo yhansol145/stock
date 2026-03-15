@@ -4,6 +4,7 @@ import { YahooFinanceService } from './services/yahoo-finance.service';
 import { TechnicalIndicatorService } from './services/technical-indicator.service';
 import { GetStockListUseCase } from './usecases/get-stock-list.usecase';
 import { GetStockDetailUseCase } from './usecases/get-stock-detail.usecase';
+import { SearchStocksUseCase } from './usecases/search-stocks.usecase';
 
 @Module({
   controllers: [StockController],
@@ -12,6 +13,7 @@ import { GetStockDetailUseCase } from './usecases/get-stock-detail.usecase';
     TechnicalIndicatorService,
     GetStockListUseCase,
     GetStockDetailUseCase,
+    SearchStocksUseCase,
   ],
 })
 export class StockModule {}

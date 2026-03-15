@@ -82,7 +82,33 @@ main { max-width: 1280px; margin: 0 auto; padding: 24px; display: flex; flex-dir
 @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
 
 /* ─── Stocks Section ─── */
-.stocks-header { display: flex; align-items: center; justify-content: space-between; }
+.stocks-header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+.stocks-controls { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+.search-wrap {
+  position: relative; display: flex; align-items: center;
+}
+.search-icon {
+  position: absolute; left: 10px;
+  color: var(--text-muted); font-size: 16px; pointer-events: none;
+}
+.search-input {
+  background: var(--surface2); border: 1px solid var(--border);
+  color: var(--text); padding: 5px 32px 5px 30px;
+  border-radius: 20px; font-size: 13px; width: 220px;
+  outline: none; transition: border-color .2s, width .2s;
+}
+.search-input::placeholder { color: var(--text-muted); }
+.search-input:focus { border-color: var(--blue); width: 260px; }
+.search-clear {
+  position: absolute; right: 8px;
+  background: transparent; border: none;
+  color: var(--text-muted); cursor: pointer; font-size: 12px;
+  padding: 2px 4px; border-radius: 4px; transition: color .15s;
+}
+.search-clear:hover { color: var(--text); }
+.search-clear.hidden { display: none; }
+
 .filter-tabs { display: flex; gap: 6px; }
 .tab {
   background: transparent; border: 1px solid var(--border);
