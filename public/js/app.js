@@ -79,9 +79,49 @@ const signalBadge = (signal, extraCls = 'signal-badge') => {
 // ─── 전체 로드 ───────────────────────────────────────────
 async function loadAll() {
   document.getElementById('last-updated').textContent = '로딩 중...';
-  await Promise.all([loadMarket(), loadStocks()]);
+  await Promise.all([loadMarket(), loadStocks(), loadNews()]);
   document.getElementById('last-updated').textContent =
     '업데이트: ' + new Date().toLocaleTimeString('ko-KR');
+}
+
+// ─── 뉴스 ────────────────────────────────────────────────
+async function loadNews() {
+  const setLoading = (id) => {
+    document.getElementById(id).innerHTML = '<div class="news-loading">로딩 중...</div>';
+  };
+  setLoading('news-korean');
+  setLoading('news-global');
+
+  try {
+    const res  = await fetch('/news');
+    const data = await res.json();
+    renderNewsList('news-korean', data.korean);
+    renderNewsList('news-global', data.global);
+  } catch (e) {
+    document.getElementById('news-korean').innerHTML = '<div class="news-loading">로드 실패</div>';
+    document.getElementById('news-global').innerHTML = '<div class="news-loading">로드 실패</div>';
+  }
+}
+
+function renderNewsList(id, articles) {
+  const el = document.getElementById(id);
+  if (!articles?.length) {
+    el.innerHTML = '<div class="news-loading">뉴스 없음</div>';
+    return;
+  }
+  el.innerHTML = articles.map(a => {
+    const date = new Date(a.publishedAt).toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+    return `
+      <div class="news-item">
+        <div class="news-meta">
+          <span class="news-source">${a.source}</span>
+          <span class="news-date">${date}</span>
+        </div>
+        <div class="news-title">${a.title}</div>
+        ${a.description ? `<div class="news-desc">${a.description}</div>` : ''}
+        <a class="news-link" href="${a.url}" target="_blank" rel="noopener">기사 보기 →</a>
+      </div>`;
+  }).join('');
 }
 
 // ─── 시장 현황 ───────────────────────────────────────────
