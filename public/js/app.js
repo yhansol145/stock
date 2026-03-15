@@ -40,6 +40,10 @@ document.addEventListener('scroll', () => {
 let allStocks = [];       // 서버에서 받은 전체 종목 (필터 전)
 let currentMarket = 'ALL';
 let currentQuery = '';
+let currentPage = 1;
+const PER_PAGE = 10;
+let sortKey = 'volume';   // 'name' | 'price' | 'changePercent' | 'volume'
+let sortDir = 'desc';     // 'asc' | 'desc'
 let priceChart = null;
 
 // ─── 유틸 ────────────────────────────────────────────────
@@ -192,7 +196,39 @@ function applyFilters() {
     }
   }
 
+  if (sortKey) {
+    filtered = [...filtered].sort((a, b) => {
+      const av = a[sortKey] ?? (sortDir === 'asc' ? Infinity : -Infinity);
+      const bv = b[sortKey] ?? (sortDir === 'asc' ? Infinity : -Infinity);
+      if (typeof av === 'string') return sortDir === 'asc' ? av.localeCompare(bv) : bv.localeCompare(av);
+      return sortDir === 'asc' ? av - bv : bv - av;
+    });
+  }
+
+  currentPage = 1;
+  _filteredStocks = filtered;
+  updateSortHeaders();
   renderStocks(filtered);
+}
+
+function toggleSort(key) {
+  if (sortKey === key) {
+    sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+  } else {
+    sortKey = key;
+    sortDir = 'desc';
+  }
+  updateSortHeaders();
+  applyFilters();
+}
+
+function updateSortHeaders() {
+  document.querySelectorAll('th[data-sort]').forEach(th => {
+    const key = th.dataset.sort;
+    th.classList.toggle('sort-active', key === sortKey);
+    const icon = th.querySelector('.sort-icon');
+    if (icon) icon.textContent = key !== sortKey ? '↕' : sortDir === 'asc' ? '↑' : '↓';
+  });
 }
 
 function onSearch(value) {
@@ -212,21 +248,25 @@ function renderStocks(stocks) {
   const tbody = document.getElementById('stocks-tbody');
   if (!stocks.length) {
     tbody.innerHTML = '<tr><td colspan="8" class="loading-row">데이터 없음</td></tr>';
+    renderPagination(0);
     return;
   }
 
-  tbody.innerHTML = stocks.map(s => {
+  const totalPages = Math.ceil(stocks.length / PER_PAGE);
+  if (currentPage > totalPages) currentPage = totalPages;
+  const start = (currentPage - 1) * PER_PAGE;
+  const paged = stocks.slice(start, start + PER_PAGE);
+
+  const stockRow = (s) => {
     const cc  = changeClass(s.changePercent);
     const mktTag = `<span class="market-tag ${s.market.toLowerCase()}">${s.market}</span>`;
     const maVs = s.ma20 ? (s.price > s.ma20 ? 'up' : 'down') : '';
     const maLabel = s.ma20
       ? `<span class="${maVs}">${fmt(s.ma20)}</span>`
       : '<span style="color:var(--text-muted)">-</span>';
-
     const macdVal = s.macd != null
       ? `<span class="${s.macd > 0 ? 'macd-pos' : 'macd-neg'}">${s.macd > 0 ? '+' : ''}${fmt(s.macd)}</span>`
       : '<span style="color:var(--text-muted)">-</span>';
-
     return `
       <tr onclick="openDetail('${s.ticker}')">
         <td>
@@ -241,7 +281,51 @@ function renderStocks(stocks) {
         <td class="right">${maLabel}</td>
         <td class="center">${signalBadge(s.signal)}</td>
       </tr>`;
-  }).join('');
+  };
+
+  // 정렬 미적용 시 sector 그룹핑, 정렬 적용 시 flat 리스트
+  if (!sortKey) {
+    const groups = paged.reduce((acc, s) => {
+      (acc[s.sector] = acc[s.sector] ?? []).push(s);
+      return acc;
+    }, {});
+    tbody.innerHTML = Object.entries(groups).map(([sector, list]) =>
+      `<tr class="group-header"><td colspan="8">${sector}</td></tr>` +
+      list.map(stockRow).join('')
+    ).join('');
+  } else {
+    tbody.innerHTML = paged.map(stockRow).join('');
+  }
+
+  renderPagination(stocks.length);
+}
+
+function renderPagination(total) {
+  const wrap = document.getElementById('pagination');
+  if (!wrap) return;
+
+  const totalPages = Math.ceil(total / PER_PAGE);
+  if (totalPages <= 1) { wrap.innerHTML = ''; return; }
+
+  const start = (currentPage - 1) * PER_PAGE + 1;
+  const end   = Math.min(currentPage * PER_PAGE, total);
+
+  let pages = '';
+  for (let i = 1; i <= totalPages; i++) {
+    pages += `<button class="page-btn ${i === currentPage ? 'active' : ''}" onclick="goPage(${i})">${i}</button>`;
+  }
+
+  wrap.innerHTML = `
+    <span class="page-info">${start}–${end} / ${total}개</span>
+    <button class="page-btn" onclick="goPage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>‹</button>
+    ${pages}
+    <button class="page-btn" onclick="goPage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}>›</button>`;
+}
+
+let _filteredStocks = [];
+function goPage(page) {
+  currentPage = page;
+  renderStocks(_filteredStocks);
 }
 
 function filterMarket(market, btn) {
@@ -256,10 +340,22 @@ async function openDetail(ticker) {
   document.getElementById('modal-overlay').classList.remove('hidden');
   document.body.style.overflow = 'hidden';
 
-  // 초기화
-  document.getElementById('modal-name').textContent = '로딩 중...';
-  document.getElementById('modal-price').textContent = '';
-  document.getElementById('modal-change').textContent = '';
+  // allStocks에서 기본 정보 즉시 표시
+  const cached = allStocks.find(s => s.ticker === ticker);
+  if (cached) {
+    document.getElementById('modal-name').textContent = cached.name;
+    document.getElementById('modal-ticker').textContent = cached.ticker;
+    document.getElementById('modal-sector').textContent = cached.sector;
+    document.getElementById('modal-price').textContent = fmt(cached.price) + '원';
+    const cc = changeClass(cached.changePercent);
+    const changeEl = document.getElementById('modal-change');
+    changeEl.textContent = `${cached.change > 0 ? '▲' : cached.change < 0 ? '▼' : '─'} ${fmt(Math.abs(cached.change))} (${fmtP(cached.changePercent)})`;
+    changeEl.className = `modal-change ${cc}`;
+  } else {
+    document.getElementById('modal-name').textContent = '로딩 중...';
+    document.getElementById('modal-price').textContent = '';
+    document.getElementById('modal-change').textContent = '';
+  }
 
   try {
     const res = await fetch(`/stocks/${ticker}`);
