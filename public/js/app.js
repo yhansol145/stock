@@ -8,17 +8,19 @@ document.addEventListener('mouseover', (e) => {
   tooltipTarget = el;
   gTooltip.textContent = el.dataset.tip;
   gTooltip.classList.add('visible');
+  // 내용 바뀔 때만 치수 캐싱 (reflow 최소화)
+  _tipW = gTooltip.offsetWidth;
+  _tipH = gTooltip.offsetHeight;
 });
 
+let _tipW = 0, _tipH = 0;
 document.addEventListener('mousemove', (e) => {
   if (!tooltipTarget) return;
   const pad = 14;
-  const tw  = gTooltip.offsetWidth;
-  const th  = gTooltip.offsetHeight;
   let x = e.clientX + pad;
-  let y = e.clientY - th - pad;
-  if (x + tw > window.innerWidth - 8)  x = e.clientX - tw - pad;
-  if (y < 8)                            y = e.clientY + pad;
+  let y = e.clientY - _tipH - pad;
+  if (x + _tipW > window.innerWidth - 8)  x = e.clientX - _tipW - pad;
+  if (y < 8)                               y = e.clientY + pad;
   gTooltip.style.left = x + 'px';
   gTooltip.style.top  = y + 'px';
 });
@@ -229,11 +231,11 @@ async function loadMarket() {
     const grid = document.getElementById('indices-grid');
     grid.innerHTML = '';
     const indexOrder = ['KOSPI', 'KOSDAQ', 'KOSPI200'];
-    for (const key of indexOrder) {
+    grid.innerHTML = indexOrder.map(key => {
       const idx = data.indices[key];
-      if (!idx) continue;
+      if (!idx) return '';
       const cc = changeClass(idx.change);
-      grid.innerHTML += `
+      return `
         <div class="index-card">
           <div class="idx-name">${idx.name}</div>
           <div class="idx-value">${fmt(idx.value)}</div>
@@ -243,7 +245,7 @@ async function loadMarket() {
           </div>
           <div class="idx-range">고 ${fmt(idx.dayHigh)} / 저 ${fmt(idx.dayLow)}</div>
         </div>`;
-    }
+    }).join('');
   } catch (e) {
     console.error('시장 데이터 로드 실패:', e);
   }
@@ -315,10 +317,12 @@ function updateSortHeaders() {
   });
 }
 
+let _searchTimer = null;
 function onSearch(value) {
   currentQuery = value.trim();
   document.getElementById('search-clear').classList.toggle('hidden', !currentQuery);
-  applyFilters();
+  clearTimeout(_searchTimer);
+  _searchTimer = setTimeout(applyFilters, 200);
 }
 
 function clearSearch() {
@@ -421,6 +425,9 @@ function filterMarket(market, btn) {
 
 // ─── 종목 상세 모달 ──────────────────────────────────────
 async function openDetail(ticker) {
+  currentDetailTicker = ticker;
+  document.getElementById('ai-analysis-result').classList.add('hidden');
+  document.getElementById('ai-analysis-btn').textContent = '분석 시작';
   document.getElementById('modal-overlay').classList.remove('hidden');
   document.body.style.overflow = 'hidden';
 
@@ -615,11 +622,64 @@ function renderPriceChart(prices) {
   });
 }
 
+// ─── AI 심층 분석 ─────────────────────────────────────────
+let currentDetailTicker = null;
+
+const AI_OPINION_MAP = {
+  '강력매수': { cls: 'sig-strong-buy' },
+  '매수':     { cls: 'sig-buy' },
+  '보유':     { cls: 'sig-neutral' },
+  '매도':     { cls: 'sig-sell' },
+  '강력매도': { cls: 'sig-strong-sell' },
+};
+
+async function loadAiAnalysis() {
+  if (!currentDetailTicker) return;
+
+  const btn    = document.getElementById('ai-analysis-btn');
+  const result = document.getElementById('ai-analysis-result');
+
+  btn.disabled = true;
+  btn.textContent = '분석 중...';
+  result.classList.add('hidden');
+
+  try {
+    const res = await fetch(`/stocks/${currentDetailTicker}/ai-analysis`);
+    const d   = await res.json();
+    if (d.statusCode) throw new Error(d.message);
+
+    const opinionInfo = AI_OPINION_MAP[d.opinion] ?? { cls: 'sig-neutral' };
+    const badge = document.getElementById('ai-opinion-badge');
+    badge.textContent  = d.opinion;
+    badge.className    = `ai-opinion-badge signal-badge-lg ${opinionInfo.cls}`;
+
+    document.getElementById('ai-summary').textContent   = d.summary;
+    document.getElementById('ai-technical').textContent = d.technical;
+    document.getElementById('ai-short').textContent     = d.shortTermOutlook;
+    document.getElementById('ai-mid').textContent       = d.midTermOutlook;
+    document.getElementById('ai-risks').textContent     = d.risks;
+    document.getElementById('ai-generated-at').textContent =
+      '생성: ' + new Date(d.generatedAt).toLocaleString('ko-KR');
+
+    result.classList.remove('hidden');
+    btn.textContent = '다시 분석';
+  } catch (e) {
+    btn.textContent = '분석 실패 — 재시도';
+    alert('AI 분석 중 오류가 발생했습니다: ' + e.message);
+  } finally {
+    btn.disabled = false;
+  }
+}
+
 function closeModal(e) {
   if (e && e.target !== document.getElementById('modal-overlay')) return;
   document.getElementById('modal-overlay').classList.add('hidden');
   document.body.style.overflow = '';
   if (priceChart) { priceChart.destroy(); priceChart = null; }
+  // AI 분석 결과 초기화
+  document.getElementById('ai-analysis-result').classList.add('hidden');
+  document.getElementById('ai-analysis-btn').textContent = '분석 시작';
+  currentDetailTicker = null;
 }
 
 // ESC 키로 모달 닫기

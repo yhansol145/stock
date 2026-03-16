@@ -6,6 +6,8 @@ import { StockCacheService } from './services/stock-cache.service';
 import { GetStockListUseCase } from './usecases/get-stock-list.usecase';
 import { GetStockDetailUseCase } from './usecases/get-stock-detail.usecase';
 import { SearchStocksUseCase } from './usecases/search-stocks.usecase';
+import { GetStockAiAnalysisUseCase } from './usecases/get-stock-ai-analysis.usecase';
+import { GroqService } from '../recommendation/services/groq.service';
 
 @Module({
   imports: [],
@@ -14,9 +16,11 @@ import { SearchStocksUseCase } from './usecases/search-stocks.usecase';
     YahooFinanceService,
     TechnicalIndicatorService,
     StockCacheService,
+    GroqService,
     GetStockListUseCase,
     GetStockDetailUseCase,
     SearchStocksUseCase,
+    GetStockAiAnalysisUseCase,
   ],
   exports: [GetStockListUseCase],
 })
