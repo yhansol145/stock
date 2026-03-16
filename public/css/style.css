@@ -28,7 +28,6 @@ header {
   background: var(--surface);
   border-bottom: 1px solid var(--border);
   position: sticky; top: 0; z-index: 100;
-  backdrop-filter: blur(8px);
 }
 .header-inner {
   max-width: 1280px; margin: 0 auto;
@@ -78,8 +77,9 @@ main { max-width: 1280px; margin: 0 auto; padding: 24px; display: flex; flex-dir
 .index-card .idx-range { font-size: 12px; color: var(--text-muted); margin-top: 8px; }
 
 /* ─── Skeleton ─── */
-.skeleton { min-height: 110px; background: linear-gradient(90deg, var(--surface) 25%, var(--surface2) 50%, var(--surface) 75%); background-size: 200% 100%; animation: shimmer 1.4s infinite; }
-@keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+.skeleton { min-height: 110px; background: var(--surface2); overflow: hidden; position: relative; }
+.skeleton::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,.04) 50%, transparent 100%); animation: shimmer 1.4s infinite; transform: translateX(-100%); }
+@keyframes shimmer { 0%{transform:translateX(-100%)} 100%{transform:translateX(100%)} }
 
 /* ─── Stocks Section ─── */
 .stocks-header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
@@ -256,12 +256,13 @@ tr.group-header td {
    MODAL
 ───────────────────────────────────────── */
 .modal-overlay {
-  position: fixed; inset: 0; background: rgba(0,0,0,.7);
-  backdrop-filter: blur(4px); z-index: 200;
+  position: fixed; inset: 0; background: rgba(0,0,0,.75);
+  z-index: 200;
   display: flex; align-items: center; justify-content: center;
   padding: 20px;
 }
 .modal-overlay.hidden { display: none; }
+.hidden { display: none !important; }
 
 .modal {
   background: var(--surface); border: 1px solid var(--border);
@@ -352,6 +353,26 @@ tr.group-header td {
 }
 .signal-reasons li.pos { border-left-color: var(--green); }
 .signal-reasons li.neg { border-left-color: var(--red); }
+
+/* ─── AI Analysis Section ─── */
+.ai-analysis-section { background: var(--surface2); border: 1px solid var(--border2); border-radius: var(--radius); padding: 16px; }
+.ai-analysis-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.ai-analysis-btn {
+  font-size: 12px; font-weight: 600; padding: 6px 16px;
+  border-radius: 6px; border: none; cursor: pointer;
+  background: var(--blue); color: #fff; transition: opacity 0.15s;
+}
+.ai-analysis-btn:hover:not(:disabled) { opacity: 0.85; }
+.ai-analysis-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.ai-opinion-row { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+.ai-summary { font-size: 14px; color: var(--text); line-height: 1.5; }
+.ai-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.ai-card { background: var(--surface); border: 1px solid var(--border2); border-radius: 8px; padding: 12px; }
+.ai-card-risk { border-color: rgba(248, 81, 73, 0.3); }
+.ai-card-label { font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+.ai-card-body { font-size: 13px; color: var(--text); line-height: 1.6; }
+.ai-generated-at { font-size: 11px; color: var(--text-muted); text-align: right; margin-top: 10px; }
+@media (max-width: 600px) { .ai-cards { grid-template-columns: 1fr; } }
 
 /* ─── Global Tooltip ─── */
 .g-tooltip {

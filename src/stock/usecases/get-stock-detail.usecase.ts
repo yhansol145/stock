@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { YahooFinanceService } from '../services/yahoo-finance.service';
 import { TechnicalIndicatorService, TechnicalIndicators } from '../services/technical-indicator.service';
+import { StockCacheService } from '../services/stock-cache.service';
 import { KR_STOCKS, KrStock } from '../constants/kr-stocks.constant';
 
 export interface PricePoint {
@@ -36,6 +37,7 @@ export class GetStockDetailUseCase {
   constructor(
     private readonly yahooFinanceService: YahooFinanceService,
     private readonly technicalIndicatorService: TechnicalIndicatorService,
+    private readonly stockCacheService: StockCacheService,
   ) {}
 
   async execute(ticker: string): Promise<StockDetailResult> {
@@ -44,10 +46,16 @@ export class GetStockDetailUseCase {
       (s) => s.ticker.toUpperCase() === normalizedTicker,
     ) ?? { ticker: normalizedTicker, name: normalizedTicker, market: 'KOSPI', sector: '기타' };
 
-    const [quote, candles] = await Promise.all([
-      this.yahooFinanceService.getQuote(normalizedTicker),
-      this.yahooFinanceService.getHistorical(normalizedTicker),
-    ]);
+    const cached = this.stockCacheService.getDetail(normalizedTicker);
+    let quote = cached?.quote ?? null;
+    let candles = cached?.candles ?? null;
+
+    if (!quote || !candles) {
+      [quote, candles] = await Promise.all([
+        this.yahooFinanceService.getQuote(normalizedTicker),
+        this.yahooFinanceService.getHistorical(normalizedTicker),
+      ]);
+    }
 
     if (!quote) {
       throw new NotFoundException(`${ticker} 종목 데이터를 가져올 수 없습니다.`);
