@@ -199,6 +199,39 @@
         </div>
         <ul id="signal-reasons" class="signal-reasons"></ul>
       </div>
+
+      <!-- AI 심층 분석 -->
+      <div class="ai-analysis-section">
+        <div class="ai-analysis-header">
+          <span class="ind-label">AI 심층 분석</span>
+          <button id="ai-analysis-btn" class="ai-analysis-btn" onclick="loadAiAnalysis()">분석 시작</button>
+        </div>
+        <div id="ai-analysis-result" class="ai-analysis-result hidden">
+          <div class="ai-opinion-row">
+            <span id="ai-opinion-badge" class="ai-opinion-badge"></span>
+            <span id="ai-summary" class="ai-summary"></span>
+          </div>
+          <div class="ai-cards">
+            <div class="ai-card">
+              <div class="ai-card-label">기술적 분석</div>
+              <div id="ai-technical" class="ai-card-body"></div>
+            </div>
+            <div class="ai-card">
+              <div class="ai-card-label">단기 전망 (1~2주)</div>
+              <div id="ai-short" class="ai-card-body"></div>
+            </div>
+            <div class="ai-card">
+              <div class="ai-card-label">중기 전망 (1~3개월)</div>
+              <div id="ai-mid" class="ai-card-body"></div>
+            </div>
+            <div class="ai-card ai-card-risk">
+              <div class="ai-card-label">리스크 요인</div>
+              <div id="ai-risks" class="ai-card-body"></div>
+            </div>
+          </div>
+          <div id="ai-generated-at" class="ai-generated-at"></div>
+        </div>
+      </div>
     </div>
   </div>
 

@@ -2,6 +2,7 @@ import { Controller, Get, Param, Query } from '@nestjs/common';
 import { GetStockListUseCase } from './usecases/get-stock-list.usecase';
 import { GetStockDetailUseCase } from './usecases/get-stock-detail.usecase';
 import { SearchStocksUseCase } from './usecases/search-stocks.usecase';
+import { GetStockAiAnalysisUseCase } from './usecases/get-stock-ai-analysis.usecase';
 
 @Controller('stocks')
 export class StockController {
@@ -9,6 +10,7 @@ export class StockController {
     private readonly getStockListUseCase: GetStockListUseCase,
     private readonly getStockDetailUseCase: GetStockDetailUseCase,
     private readonly searchStocksUseCase: SearchStocksUseCase,
+    private readonly getStockAiAnalysisUseCase: GetStockAiAnalysisUseCase,
   ) {}
 
   /**
@@ -29,6 +31,21 @@ export class StockController {
   @Get('search')
   searchStocks(@Query('query') query: string) {
     return this.searchStocksUseCase.execute(query);
+  }
+
+  /**
+   * GET /stocks/:ticker
+   * 예: GET /stocks/005930.KS
+   * 종목 상세 분석 (RSI, MACD, 볼린저밴드, 이동평균 등)
+   */
+  /**
+   * GET /stocks/:ticker/ai-analysis
+   * 예: GET /stocks/005930.KS/ai-analysis
+   * 종목 AI 심층 분석 (Groq LLaMA)
+   */
+  @Get(':ticker/ai-analysis')
+  getStockAiAnalysis(@Param('ticker') ticker: string) {
+    return this.getStockAiAnalysisUseCase.execute(ticker);
   }
 
   /**
