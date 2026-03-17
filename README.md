@@ -2,11 +2,11 @@
 
 국내 주식 시장의 기술적 지표, 매매 신호, 글로벌 뉴스, AI 종목 추천을 제공하는 NestJS 기반 REST API + 웹 대시보드입니다.
 
-![대시보드 메인](docs/dashboard_main.png)
+🔗 **배포 URL**: [https://stock-puce-iota.vercel.app](https://stock-puce-iota.vercel.app)
 
 ## 주요 기능
 
-- **백그라운드 캐시** - 서버 시작 시 전체 종목 데이터를 미리 수집, 30분마다 자동 갱신 (빠른 응답)
+- **Redis 캐시** - Upstash Redis를 통한 전 종목 데이터 캐시, Vercel Cron으로 매일 자동 갱신
 - **실시간 주가 데이터** - Yahoo Finance API를 통한 현재 주가 및 6개월 히스토리 데이터 조회
 - **기술적 지표 계산** - RSI, MACD, 볼린저 밴드, 이동평균선(5/20/60/120일)
 - **매매 신호 생성** - 복합 점수 기반의 강력매수/매수/중립/매도/강력매도 신호
@@ -14,6 +14,7 @@
 - **종목 검색** - 종목명 regex 검색 지원
 - **시장 뉴스** - GNews API를 통한 한국 증시 뉴스 및 글로벌 이슈 제공
 - **AI 종목 추천** - Groq LLM(LLaMA 3.3 70B)이 주가 데이터 + 뉴스를 종합 분석하여 투자 유망 종목 8개 추천
+- **AI 심층 분석** - 개별 종목에 대한 AI 기반 상세 투자 분석 제공
 - **웹 대시보드** - 주가, 지표, 뉴스, AI 추천을 한눈에 볼 수 있는 UI
 
 ## 기술 스택
@@ -21,6 +22,8 @@
 - **Runtime:** Node.js 18
 - **Framework:** NestJS 10.x
 - **Language:** TypeScript 5.x
+- **Deployment:** Vercel (Serverless)
+- **Cache:** Upstash Redis
 - **HTTP Client:** Axios
 - **Technical Analysis:** technicalindicators
 - **News:** GNews API
@@ -34,10 +37,15 @@
 ```
 GNEWS_API_KEY=your_gnews_api_key
 GROQ_API_KEY=your_groq_api_key
+UPSTASH_REDIS_REST_URL=your_upstash_redis_url      # Vercel 배포 시 필요
+UPSTASH_REDIS_REST_TOKEN=your_upstash_redis_token  # Vercel 배포 시 필요
 ```
 
 - **GNews API 키**: [gnews.io](https://gnews.io) 에서 무료 발급 (하루 100건)
 - **Groq API 키**: [console.groq.com](https://console.groq.com) 에서 무료 발급 (카드 등록 불필요)
+- **Upstash Redis**: [console.upstash.com](https://console.upstash.com) 에서 무료 발급 (Vercel 배포 시 필요)
+
+> 로컬 개발 시 Upstash 키가 없으면 자동으로 인메모리 캐시로 동작합니다.
 
 ## 프로젝트 구조
 
@@ -53,10 +61,11 @@ src/
 │   ├── services/
 │   │   ├── yahoo-finance.service.ts
 │   │   ├── technical-indicator.service.ts
-│   │   └── stock-cache.service.ts  # 백그라운드 캐시 (30분 자동 갱신)
+│   │   └── stock-cache.service.ts  # Redis / 인메모리 캐시 (환경에 따라 자동 전환)
 │   └── usecases/
 │       ├── get-stock-list.usecase.ts
 │       ├── get-stock-detail.usecase.ts
+│       ├── get-stock-ai-analysis.usecase.ts
 │       └── search-stocks.usecase.ts
 ├── market/                          # 시장 지수 모듈
 │   ├── market.module.ts
@@ -72,13 +81,18 @@ src/
 │   │   └── gnews.service.ts
 │   └── usecases/
 │       └── get-news.usecase.ts
-└── recommendation/                  # AI 종목 추천 모듈
-    ├── recommendation.module.ts
-    ├── recommendation.controller.ts
-    ├── services/
-    │   └── groq.service.ts          # Groq LLM 연동
-    └── usecases/
-        └── get-recommendations.usecase.ts
+├── recommendation/                  # AI 종목 추천 모듈
+│   ├── recommendation.module.ts
+│   ├── recommendation.controller.ts
+│   ├── services/
+│   │   └── groq.service.ts          # Groq LLM 연동
+│   └── usecases/
+│       └── get-recommendations.usecase.ts
+└── cron/                            # Vercel Cron 모듈
+    ├── cron.module.ts
+    └── cron.controller.ts           # GET /cron/refresh — 캐시 갱신
+api/
+└── index.ts                         # Vercel 서버리스 엔트리포인트
 ```
 
 ## 설치 및 실행
@@ -100,7 +114,29 @@ npm start
 서버는 기본적으로 **포트 3000**에서 실행됩니다.
 대시보드는 브라우저에서 `http://localhost:3000` 으로 접속합니다.
 
-> 서버 시작 시 백그라운드에서 전체 종목 데이터를 한 번 수집합니다. 최초 로딩이 완료되면 이후 요청은 캐시에서 즉시 반환됩니다.
+> 로컬에서 실행 시 서버 시작 시점에 전체 종목 데이터를 한 번 수집합니다. 최초 로딩이 완료되면 이후 요청은 캐시에서 즉시 반환됩니다.
+
+## Vercel 배포
+
+### 사전 준비
+1. [Upstash](https://console.upstash.com) 에서 Redis 데이터베이스 생성 (리전: `ap-northeast-1` 권장)
+2. GitHub 리포지토리에 푸시
+
+### Vercel 환경 변수 설정
+| Key | Value |
+|-----|-------|
+| `VERCEL` | `1` |
+| `UPSTASH_REDIS_REST_URL` | Upstash REST URL |
+| `UPSTASH_REDIS_REST_TOKEN` | Upstash REST Token |
+| `GNEWS_API_KEY` | GNews API 키 |
+| `GROQ_API_KEY` | Groq API 키 |
+
+### 첫 배포 후 캐시 초기화
+배포 직후 Redis가 비어있으므로 한 번 수동 호출 필요:
+```
+GET https://your-domain.vercel.app/cron/refresh
+```
+이후 매일 자정(UTC)에 Vercel Cron이 자동 갱신합니다.
 
 ## API 엔드포인트
 
@@ -112,11 +148,12 @@ npm start
 
 ### 종목 분석
 
-| Method | Endpoint          | 설명 |
-|--------|-------------------|------|
-| GET    | `/stocks`         | 전체 종목 목록 및 매매 신호 (쿼리: `?market=KOSPI\|KOSDAQ`) |
-| GET    | `/stocks/search`  | 종목명 검색 (쿼리: `?query=삼성`, regex 지원) |
-| GET    | `/stocks/:ticker` | 특정 종목 상세 분석 (예: `/stocks/005930.KS`) |
+| Method | Endpoint                    | 설명 |
+|--------|-----------------------------|------|
+| GET    | `/stocks`                   | 전체 종목 목록 및 매매 신호 (쿼리: `?market=KOSPI\|KOSDAQ`) |
+| GET    | `/stocks/search`            | 종목명 검색 (쿼리: `?query=삼성`, regex 지원) |
+| GET    | `/stocks/:ticker`           | 특정 종목 상세 분석 (예: `/stocks/005930.KS`) |
+| GET    | `/stocks/:ticker/ai-analysis` | 특정 종목 AI 심층 분석 |
 
 ### 뉴스
 
