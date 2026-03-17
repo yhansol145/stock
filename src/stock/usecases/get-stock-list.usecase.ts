@@ -27,7 +27,7 @@ export class GetStockListUseCase {
   constructor(private readonly stockCacheService: StockCacheService) {}
 
   async execute(market?: 'KOSPI' | 'KOSDAQ'): Promise<StockListResult> {
-    const { stocks, updatedAt } = this.stockCacheService.getCache();
+    const { stocks, updatedAt } = await this.stockCacheService.getCache();
     const filtered = market ? stocks.filter((s) => s.market === market) : stocks;
     const sorted = [...filtered].sort((a, b) => b.signalScore - a.signalScore);
     return { stocks: sorted, updatedAt };

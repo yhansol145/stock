@@ -6,16 +6,21 @@ import { StockModule } from './stock/stock.module';
 import { MarketModule } from './market/market.module';
 import { NewsModule } from './news/news.module';
 import { RecommendationModule } from './recommendation/recommendation.module';
+import { CronModule } from './cron/cron.module';
+
+const isVercel = process.env.VERCEL === '1';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
-    ServeStaticModule.forRoot({ rootPath: join(__dirname, '..', 'public') }),
+    ...(isVercel
+      ? []
+      : [ServeStaticModule.forRoot({ rootPath: join(__dirname, '..', 'public') })]),
     StockModule,
     MarketModule,
     NewsModule,
     RecommendationModule,
+    CronModule,
   ],
 })
 export class AppModule {}
-
