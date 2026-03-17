@@ -46,7 +46,7 @@ export class GetStockDetailUseCase {
       (s) => s.ticker.toUpperCase() === normalizedTicker,
     ) ?? { ticker: normalizedTicker, name: normalizedTicker, market: 'KOSPI', sector: '기타' };
 
-    const cached = this.stockCacheService.getDetail(normalizedTicker);
+    const cached = await this.stockCacheService.getDetail(normalizedTicker);
     let quote = cached?.quote ?? null;
     let candles = cached?.candles ?? null;
 
