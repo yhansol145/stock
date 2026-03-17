@@ -3,6 +3,10 @@
     {
       "source": "/(stocks|market|news|recommendations|cron)(.*)",
       "destination": "/api/index"
+    },
+    {
+      "source": "/",
+      "destination": "/index.html"
     }
   ],
   "crons": [
