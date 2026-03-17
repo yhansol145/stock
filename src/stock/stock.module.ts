@@ -22,6 +22,6 @@ import { GroqService } from '../recommendation/services/groq.service';
     SearchStocksUseCase,
     GetStockAiAnalysisUseCase,
   ],
-  exports: [GetStockListUseCase],
+  exports: [GetStockListUseCase, StockCacheService],
 })
 export class StockModule {}
