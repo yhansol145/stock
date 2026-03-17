@@ -1,7 +1,16 @@
 {
+  "builds": [
+    {
+      "src": "api/index.ts",
+      "use": "@vercel/node",
+      "config": {
+        "includeFiles": ["public/**"]
+      }
+    }
+  ],
   "rewrites": [
     {
-      "source": "/(stocks|market|news|recommendations|cron)(.*)",
+      "source": "/(.*)",
       "destination": "/api/index"
     }
   ],
