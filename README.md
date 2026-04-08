@@ -13,7 +13,7 @@
 - **시장 지수 조회** - KOSPI, KOSDAQ, KOSPI200 지수 및 시장 개장 여부
 - **종목 검색** - 종목명 regex 검색 지원
 - **시장 뉴스** - GNews API를 통한 한국 증시 뉴스 및 글로벌 이슈 제공
-- **AI 종목 추천** - Groq LLM(LLaMA 3.3 70B)이 주가 데이터 + 뉴스를 종합 분석하여 투자 유망 종목 8개 추천
+- **AI 종목 추천** - Groq LLM(LLaMA 3.3 70B)이 주가 데이터 + 뉴스를 종합 분석하여 투자 유망 종목 9개 추천
 - **AI 심층 분석** - 개별 종목에 대한 AI 기반 상세 투자 분석 제공
 - **웹 대시보드** - 주가, 지표, 뉴스, AI 추천을 한눈에 볼 수 있는 UI
 
@@ -123,59 +123,89 @@ npm start
 2. GitHub 리포지토리에 푸시
 
 ### Vercel 환경 변수 설정
-| Key | Value |
-|-----|-------|
-| `VERCEL` | `1` |
-| `UPSTASH_REDIS_REST_URL` | Upstash REST URL |
+
+
+| Key                        | Value              |
+| -------------------------- | ------------------ |
+| `VERCEL`                   | `1`                |
+| `UPSTASH_REDIS_REST_URL`   | Upstash REST URL   |
 | `UPSTASH_REDIS_REST_TOKEN` | Upstash REST Token |
-| `GNEWS_API_KEY` | GNews API 키 |
-| `GROQ_API_KEY` | Groq API 키 |
+| `GNEWS_API_KEY`            | GNews API 키        |
+| `GROQ_API_KEY`             | Groq API 키         |
+
 
 ### 첫 배포 후 캐시 초기화
+
 배포 직후 Redis가 비어있으므로 한 번 수동 호출 필요:
+
 ```
 GET https://your-domain.vercel.app/cron/refresh
 ```
+
 이후 매일 자정(UTC)에 Vercel Cron이 자동 갱신합니다.
+
+### 외부 Cron으로 갱신 주기 단축 (cron-job.org)
+
+Vercel 무료 플랜의 Cron은 하루 1회로 제한됩니다. 더 자주 갱신하려면 [cron-job.org](https://cron-job.org) 무료 서비스를 이용해 외부에서 주기적으로 호출할 수 있습니다.
+
+1. [cron-job.org](https://cron-job.org) 에 가입 후 **"CREATE CRONJOB"** 클릭
+2. **URL** 에 갱신 엔드포인트 입력:
+   ```
+   https://your-domain.vercel.app/cron/refresh
+   ```
+3. **Execution schedule** 을 원하는 주기로 설정 (예: 매 15분)
+4. 저장 후 활성화
+
+> 이 방법을 사용하면 Vercel Cron 설정과 무관하게 원하는 주기로 캐시를 갱신할 수 있습니다.
 
 ## API 엔드포인트
 
 ### 시장 지수
 
-| Method | Endpoint  | 설명 |
-|--------|-----------|------|
+
+| Method | Endpoint  | 설명                                    |
+| ------ | --------- | ------------------------------------- |
 | GET    | `/market` | KOSPI, KOSDAQ, KOSPI200 지수 및 시장 개장 여부 |
+
 
 ### 종목 분석
 
-| Method | Endpoint                    | 설명 |
-|--------|-----------------------------|------|
-| GET    | `/stocks`                   | 전체 종목 목록 및 매매 신호 (쿼리: `?market=KOSPI\|KOSDAQ`) |
-| GET    | `/stocks/search`            | 종목명 검색 (쿼리: `?query=삼성`, regex 지원) |
-| GET    | `/stocks/:ticker`           | 특정 종목 상세 분석 (예: `/stocks/005930.KS`) |
-| GET    | `/stocks/:ticker/ai-analysis` | 특정 종목 AI 심층 분석 |
+
+| Method | Endpoint                      | 설명                                            |
+| ------ | ----------------------------- | --------------------------------------------- |
+| GET    | `/stocks`                     | 전체 종목 목록 및 매매 신호 (쿼리: `?market=KOSPI|KOSDAQ`) |
+| GET    | `/stocks/search`              | 종목명 검색 (쿼리: `?query=삼성`, regex 지원)            |
+| GET    | `/stocks/:ticker`             | 특정 종목 상세 분석 (예: `/stocks/005930.KS`)          |
+| GET    | `/stocks/:ticker/ai-analysis` | 특정 종목 AI 심층 분석                                |
+
 
 ### 뉴스
 
-| Method | Endpoint | 설명 |
-|--------|----------|------|
+
+| Method | Endpoint | 설명                                |
+| ------ | -------- | --------------------------------- |
 | GET    | `/news`  | 한국 증시 뉴스(korean) + 글로벌 이슈(global) |
+
 
 ### AI 종목 추천
 
-| Method | Endpoint           | 설명 |
-|--------|--------------------|------|
-| GET    | `/recommendations` | 주가 데이터 + 뉴스 기반 AI 종목 추천 8개 (Groq LLM) |
+
+| Method | Endpoint           | 설명                                    |
+| ------ | ------------------ | ------------------------------------- |
+| GET    | `/recommendations` | 주가 데이터 + 뉴스 기반 AI 종목 추천 9개 (Groq LLM) |
+
 
 ## 매매 신호 기준
 
-| 신호 | 점수 범위 |
-|------|----------|
-| `strong_buy`  | 5점 이상  |
+
+| 신호            | 점수 범위    |
+| ------------- | -------- |
+| `strong_buy`  | 5점 이상    |
 | `buy`         | 2 ~ 4점   |
 | `neutral`     | -1 ~ 1점  |
 | `sell`        | -2 ~ -4점 |
-| `strong_sell` | -5점 이하 |
+| `strong_sell` | -5점 이하   |
+
 
 ## 추적 종목
 

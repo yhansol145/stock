@@ -73,7 +73,7 @@ export class GetRecommendationsUseCase {
       .map((n) => `- ${n.title}: ${n.description}`)
       .join('\n');
 
-    return `당신은 한국 주식 시장 전문 애널리스트입니다. 아래 데이터를 분석하여 투자 유망 종목 8개를 추천해주세요.
+    return `당신은 한국 주식 시장 전문 애널리스트입니다. 아래 데이터를 분석하여 투자 유망 종목 9개를 추천해주세요.
 
 ## 현재 주식 데이터
 ${stockLines}
