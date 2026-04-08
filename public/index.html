@@ -1,278 +1,371 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="ko" class="dark">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>한국 주식 분석 대시보드</title>
-  <link rel="stylesheet" href="/css/style.css" />
+  <title>OBSERVATORY | Market Terminal</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            obs: {
+              bg: '#0b1326',
+              s1: '#131b2e',
+              s2: '#171f33',
+              s3: '#222a3d',
+              s4: '#2d3449',
+              primary: '#4edea3',
+              'primary-dim': '#009365',
+              secondary: '#ffb3ad',
+              tertiary: '#adc6ff',
+              outline: '#45464d',
+            }
+          },
+          fontFamily: {
+            headline: ['Manrope', 'sans-serif'],
+            body: ['Inter', 'sans-serif'],
+          },
+        }
+      }
+    }
+  </script>
+  <link rel="stylesheet" href="/css/style.css" />
 </head>
-<body>
-  <header>
-    <div class="header-inner">
-      <div class="header-title">
-        <span class="logo">📈</span>
-        <h1>한국 주식 분석 대시보드</h1>
+<body class="bg-obs-bg text-[#dae2fd] font-body overflow-x-hidden">
+
+  <!-- ═══ TOP NAVBAR ═══ -->
+  <header class="bg-obs-bg/80 backdrop-blur-xl fixed top-0 w-full z-50 flex justify-between items-center px-6 h-16" style="box-shadow: 0 16px 32px rgba(0,0,0,0.4);">
+    <div class="flex items-center gap-8">
+      <!-- Mobile hamburger -->
+      <button id="sidebar-toggle" class="lg:hidden p-2 text-slate-400 hover:text-white" onclick="toggleSidebar()">
+        <span class="material-symbols-outlined">menu</span>
+      </button>
+      <span class="text-xl font-bold tracking-tighter text-obs-primary font-headline">OBSERVATORY</span>
+      <nav class="hidden md:flex gap-6 items-center">
+        <a class="text-obs-primary border-b-2 border-obs-primary pb-1 font-medium text-sm" href="#" onclick="scrollToSection('market-pulse')">Dashboard</a>
+      </nav>
+    </div>
+    <div class="flex items-center gap-4">
+      <div class="relative hidden sm:block">
+        <span class="absolute inset-y-0 left-3 flex items-center text-slate-400">
+          <span class="material-symbols-outlined text-sm">search</span>
+        </span>
+        <input id="nav-search-input" class="bg-obs-s1 border-none rounded-full py-2 pl-10 pr-4 text-xs w-64 focus:ring-1 focus:ring-obs-primary focus:outline-none text-[#dae2fd] placeholder-slate-500" placeholder="종목명 검색..." type="text" oninput="onNavSearch(this.value)" />
       </div>
-      <div class="header-right">
+      <div class="flex items-center gap-2">
         <span id="market-status-badge" class="status-badge">로딩 중...</span>
-        <span id="last-updated" class="last-updated"></span>
-        <button class="refresh-btn" onclick="loadAll()">↻ 새로고침</button>
+        <span id="last-updated" class="text-[10px] text-slate-500 hidden sm:inline"></span>
+        <button class="p-2 hover:bg-obs-s3 rounded-full transition-all duration-300 text-slate-400" onclick="loadAll()" title="새로고침">
+          <span class="material-symbols-outlined">refresh</span>
+        </button>
       </div>
     </div>
   </header>
 
-  <main>
-    <!-- 시장 지수 -->
-    <section class="section">
-      <h2 class="section-title">시장 현황</h2>
-      <div id="indices-grid" class="indices-grid">
-        <div class="index-card skeleton"></div>
-        <div class="index-card skeleton"></div>
-        <div class="index-card skeleton"></div>
+  <!-- ═══ SIDEBAR ═══ -->
+  <aside id="sidebar" class="bg-obs-s1 bg-gradient-to-r from-obs-s2 to-obs-bg fixed left-0 top-0 h-full w-64 flex flex-col py-6 gap-2 z-40 pt-20 transition-transform duration-300 -translate-x-full lg:translate-x-0">
+    <div class="px-6 mb-8">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-obs-primary/10 flex items-center justify-center">
+          <span class="material-symbols-outlined text-obs-primary" style="font-variation-settings:'FILL' 1;">insights</span>
+        </div>
+        <div>
+          <h3 class="text-sm font-headline font-black italic text-obs-primary">Market Terminal</h3>
+          <p class="text-[10px] uppercase tracking-widest text-slate-500">Premium Access</p>
+        </div>
+      </div>
+    </div>
+    <nav class="flex-grow flex flex-col gap-1">
+      <a class="sidebar-link active bg-obs-s3 text-obs-primary rounded-xl mx-2 px-4 py-3 border-l-4 border-obs-primary flex items-center gap-3 transition-all" href="#" onclick="scrollToSection('market-pulse')">
+        <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">dashboard</span>
+        <span class="font-headline font-medium text-sm">Overview</span>
+      </a>
+    </nav>
+  </aside>
+
+  <!-- ═══ SIDEBAR OVERLAY (mobile) ═══ -->
+  <div id="sidebar-overlay" class="fixed inset-0 bg-black/60 z-30 hidden lg:hidden" onclick="toggleSidebar()"></div>
+
+  <!-- ═══ MAIN CONTENT ═══ -->
+  <main class="lg:ml-64 pt-20 px-4 lg:px-8 pb-12">
+
+    <!-- Market Pulse Cards -->
+    <section id="market-pulse" class="mb-8">
+      <div id="indices-grid" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="bg-obs-s2 rounded-2xl p-6 skeleton"></div>
+        <div class="bg-obs-s2 rounded-2xl p-6 skeleton"></div>
+        <div class="bg-obs-s2 rounded-2xl p-6 skeleton"></div>
       </div>
     </section>
 
-    <!-- AI 종목 추천 -->
-    <section class="section">
-      <div class="rec-header">
-        <h2 class="section-title">AI 종목 추천</h2>
-        <div class="rec-header-right">
-          <span id="rec-time" class="rec-time"></span>
-          <button class="rec-btn" id="rec-btn" onclick="loadRecommendations()">✦ AI 분석 시작</button>
-        </div>
-      </div>
-      <p class="rec-desc">현재 주식 데이터와 뉴스를 AI가 종합 분석하여 투자 유망 종목 5개를 추천합니다. <em>투자 참고용이며 실제 투자 판단은 본인 책임입니다.</em></p>
-      <div id="rec-section">
-        <div id="rec-summary" class="rec-summary"></div>
-        <div id="rec-grid" class="rec-grid"></div>
-      </div>
-    </section>
+    <!-- Bento Grid: AI Recommendations + News -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-8">
 
-    <!-- 뉴스 -->
-    <section class="section">
-      <h2 class="section-title">시장 뉴스</h2>
-      <div class="news-grid">
-        <div class="news-col">
-          <div class="news-col-title">한국 증시</div>
-          <div id="news-korean" class="news-list"></div>
-        </div>
-        <div class="news-col">
-          <div class="news-col-title">글로벌 이슈</div>
-          <div id="news-global" class="news-list"></div>
-        </div>
-      </div>
-    </section>
-
-    <!-- 종목 리스트 -->
-    <section class="section">
-      <div class="stocks-header">
-        <h2 class="section-title">종목 분석</h2>
-        <div class="stocks-controls">
-          <div class="search-wrap">
-            <span class="search-icon">⌕</span>
-            <input
-              id="search-input"
-              class="search-input"
-              type="text"
-              placeholder="종목명 검색"
-              oninput="onSearch(this.value)"
-            />
-            <button id="search-clear" class="search-clear hidden" onclick="clearSearch()">✕</button>
+      <!-- AI Recommendations -->
+      <section id="rec-section-wrap" class="lg:col-span-8 bg-obs-s2 rounded-2xl p-6 lg:p-8">
+        <div class="flex justify-between items-center mb-6">
+          <div>
+            <h2 class="text-xl font-bold font-headline flex items-center gap-2">
+              <span class="material-symbols-outlined text-obs-primary" style="font-variation-settings:'FILL' 1;">auto_awesome</span>
+              AI 종목 추천
+            </h2>
+            <p class="text-xs text-slate-500 mt-1">주가 데이터 + 뉴스 종합 AI 분석 기반 추천</p>
           </div>
-          <div class="filter-tabs">
-            <button class="tab active" onclick="filterMarket('ALL', this)">전체</button>
-            <button class="tab" onclick="filterMarket('KOSPI', this)">KOSPI</button>
-            <button class="tab" onclick="filterMarket('KOSDAQ', this)">KOSDAQ</button>
+          <div class="flex items-center gap-3">
+            <span id="rec-time" class="text-[10px] text-slate-500"></span>
+            <button id="rec-btn" class="px-4 py-2 bg-gradient-to-r from-obs-primary to-emerald-400 text-[#003824] rounded-full text-xs font-bold hover:scale-[1.02] transition-transform" onclick="loadRecommendations()">AI 분석 시작</button>
           </div>
         </div>
+        <p class="text-[11px] text-slate-500 mb-4 leading-relaxed">현재 주식 데이터와 뉴스를 AI가 종합 분석하여 투자 유망 종목을 추천합니다. <span class="text-yellow-500">투자 참고용이며 실제 투자 판단은 본인 책임입니다.</span></p>
+        <div id="rec-section">
+          <div id="rec-summary" class="rec-summary"></div>
+          <div id="rec-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4"></div>
+        </div>
+      </section>
+
+      <!-- Market News -->
+      <section id="news-section" class="lg:col-span-4 bg-obs-s2 rounded-2xl p-6 flex flex-col">
+        <div class="flex items-center justify-between mb-6">
+          <h2 class="text-lg font-bold font-headline">Market News</h2>
+          <div class="flex gap-2 items-center">
+            <button class="news-tab text-[10px] font-bold text-obs-primary px-2 py-1 bg-obs-primary/10 rounded" onclick="switchNewsTab('korean', this)">LOCAL</button>
+            <button class="news-tab text-[10px] font-bold text-slate-400 px-2 py-1 hover:bg-white/5 rounded" onclick="switchNewsTab('global', this)">GLOBAL</button>
+            <button id="translate-btn" class="text-[10px] font-bold text-slate-500 px-2 py-1 hover:bg-white/5 rounded flex items-center gap-1 transition-colors" onclick="toggleTranslate()">
+              <span class="material-symbols-outlined text-xs">translate</span>
+              <span id="translate-btn-label">번역</span>
+            </button>
+          </div>
+        </div>
+        <div id="news-korean" class="space-y-4 flex-grow overflow-y-auto pr-2 custom-scrollbar"></div>
+        <div id="news-global" class="space-y-4 flex-grow overflow-y-auto pr-2 custom-scrollbar hidden"></div>
+      </section>
+    </div>
+
+    <!-- Stock Screener Table -->
+    <section id="screener-section" class="bg-obs-s2 rounded-3xl p-6 lg:p-8">
+      <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+        <div>
+          <h2 class="text-2xl font-black font-headline tracking-tight">Stock Analysis</h2>
+          <p class="text-xs text-slate-500 mt-1">기술적 지표 기반 종목 분석</p>
+        </div>
+        <div class="flex items-center gap-3">
+          <!-- Search -->
+          <div class="relative">
+            <span class="absolute inset-y-0 left-3 flex items-center text-slate-500">
+              <span class="material-symbols-outlined text-sm">search</span>
+            </span>
+            <input id="search-input" class="bg-obs-s1 border-none rounded-full py-2 pl-9 pr-8 text-xs w-48 focus:w-56 focus:ring-1 focus:ring-obs-primary focus:outline-none transition-all text-[#dae2fd] placeholder-slate-500" type="text" placeholder="종목명 검색" oninput="onSearch(this.value)" />
+            <button id="search-clear" class="absolute right-2 inset-y-0 text-slate-500 hover:text-white text-xs hidden" onclick="clearSearch()">
+              <span class="material-symbols-outlined text-sm">close</span>
+            </button>
+          </div>
+          <!-- Filter Tabs -->
+          <div class="flex bg-obs-s1 p-1 rounded-xl">
+            <button class="filter-tab px-4 py-1.5 text-xs font-bold rounded-lg transition-colors bg-obs-s3 text-white shadow-lg" onclick="filterMarket('ALL', this)">전체</button>
+            <button class="filter-tab px-4 py-1.5 text-xs font-bold rounded-lg transition-colors text-slate-400 hover:text-white" onclick="filterMarket('KOSPI', this)">KOSPI</button>
+            <button class="filter-tab px-4 py-1.5 text-xs font-bold rounded-lg transition-colors text-slate-400 hover:text-white" onclick="filterMarket('KOSDAQ', this)">KOSDAQ</button>
+          </div>
+        </div>
       </div>
-      <div class="table-wrapper">
-        <table class="stocks-table">
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-separate border-spacing-y-1">
           <thead>
-            <tr>
-              <th class="sortable" data-sort="name" onclick="toggleSort('name')">종목 <span class="sort-icon">↕</span></th>
-              <th class="right sortable" data-sort="price" onclick="toggleSort('price')">현재가 <span class="sort-icon">↕</span></th>
-              <th class="right sortable" data-sort="changePercent" onclick="toggleSort('changePercent')">등락률 <span class="sort-icon">↕</span></th>
-              <th class="right sortable" data-sort="volume" onclick="toggleSort('volume')">거래량 <span class="sort-icon">↕</span></th>
-              <th class="center has-tip" data-tip="RSI (상대강도지수)&#10;&#10;주가 상승/하락의 속도를 0~100으로 측정합니다.&#10;&#10;• 30 이하  →  과매도 (반등 가능성)&#10;• 30~40  →  저평가 구간&#10;• 40~60  →  중립&#10;• 60~70  →  고평가 구간&#10;• 70 이상  →  과매수 (조정 가능성)&#10;&#10;기간: 14일">RSI ⓘ</th>
-              <th class="center has-tip" data-tip="MACD (이동평균 수렴·확산)&#10;&#10;단기(12일)와 장기(26일) 지수이동평균의 차이입니다.&#10;&#10;• 히스토그램 > 0  →  상승 모멘텀&#10;• 히스토그램 < 0  →  하락 모멘텀&#10;• MACD > Signal  →  골든크로스 (매수)&#10;• MACD < Signal  →  데드크로스 (매도)">MACD ⓘ</th>
-              <th class="right has-tip" data-tip="이동평균 (MA, Moving Average)&#10;&#10;일정 기간의 평균 종가로 추세를 파악합니다.&#10;&#10;• 현재가 > MA20  →  단기 상승 추세&#10;• 현재가 < MA20  →  단기 하락 추세">MA20 ⓘ</th>
-              <th class="center has-tip" data-tip="종합 신호&#10;&#10;RSI·MACD·볼린저밴드·이동평균을&#10;종합한 매매 참고 신호입니다.&#10;&#10;점수 기준:&#10;• ≥ +5  →  강력 매수&#10;• +2 ~ +4  →  매수&#10;• -1 ~ +1  →  중립&#10;• -4 ~ -2  →  매도&#10;• ≤ -5  →  강력 매도&#10;&#10;⚠️ 기술적 지표 기반 참고용입니다.">신호 ⓘ</th>
+            <tr class="text-slate-500 text-[10px] font-bold uppercase tracking-widest">
+              <th class="px-4 pb-4 sortable" data-sort="name" onclick="toggleSort('name')">종목 <span class="sort-icon">↕</span></th>
+              <th class="px-4 pb-4 text-right sortable" data-sort="price" onclick="toggleSort('price')">현재가 <span class="sort-icon">↕</span></th>
+              <th class="px-4 pb-4 text-right sortable" data-sort="changePercent" onclick="toggleSort('changePercent')">등락률 <span class="sort-icon">↕</span></th>
+              <th class="px-4 pb-4 text-right sortable" data-sort="volume" onclick="toggleSort('volume')">거래량 <span class="sort-icon">↕</span></th>
+              <th class="px-4 pb-4 text-center has-tip" data-tip="RSI (상대강도지수)&#10;&#10;주가 상승/하락의 속도를 0~100으로 측정합니다.&#10;&#10;• 30 이하  →  과매도 (반등 가능성)&#10;• 30~40  →  저평가 구간&#10;• 40~60  →  중립&#10;• 60~70  →  고평가 구간&#10;• 70 이상  →  과매수 (조정 가능성)&#10;&#10;기간: 14일">RSI</th>
+              <th class="px-4 pb-4 text-center has-tip" data-tip="MACD (이동평균 수렴·확산)&#10;&#10;단기(12일)와 장기(26일) 지수이동평균의 차이입니다.&#10;&#10;• 히스토그램 > 0  →  상승 모멘텀&#10;• 히스토그램 < 0  →  하락 모멘텀&#10;• MACD > Signal  →  골든크로스 (매수)&#10;• MACD < Signal  →  데드크로스 (매도)">MACD</th>
+              <th class="px-4 pb-4 text-right has-tip" data-tip="이동평균 (MA, Moving Average)&#10;&#10;일정 기간의 평균 종가로 추세를 파악합니다.&#10;&#10;• 현재가 > MA20  →  단기 상승 추세&#10;• 현재가 < MA20  →  단기 하락 추세">MA20</th>
+              <th class="px-4 pb-4 text-right has-tip" data-tip="종합 신호&#10;&#10;RSI·MACD·볼린저밴드·이동평균을&#10;종합한 매매 참고 신호입니다.&#10;&#10;점수 기준:&#10;• ≥ +5  →  강력 매수&#10;• +2 ~ +4  →  매수&#10;• -1 ~ +1  →  중립&#10;• -4 ~ -2  →  매도&#10;• ≤ -5  →  강력 매도">신호</th>
             </tr>
           </thead>
-          <tbody id="stocks-tbody">
-            <tr><td colspan="8" class="loading-row">데이터 로딩 중...</td></tr>
+          <tbody id="stocks-tbody" class="text-sm font-medium">
+            <tr><td colspan="8" class="text-center py-10 text-slate-500">데이터 로딩 중...</td></tr>
           </tbody>
-          <tfoot>
-            <tr>
-              <td colspan="8">
-                <div id="pagination" class="pagination"></div>
-              </td>
-            </tr>
-          </tfoot>
         </table>
       </div>
+      <!-- Pagination -->
+      <div id="pagination" class="flex flex-col sm:flex-row justify-between items-center mt-6 pt-6 border-t border-obs-outline/15 gap-4"></div>
     </section>
   </main>
 
-  <!-- 상세 모달 -->
-  <div id="modal-overlay" class="modal-overlay hidden" onclick="closeModal(event)">
-    <div class="modal" id="detail-modal">
-      <div class="modal-header">
+  <!-- ═══ STOCK DETAIL MODAL ═══ -->
+  <div id="modal-overlay" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-[200] flex items-center justify-center p-4 hidden" onclick="closeModal(event)">
+    <div class="bg-obs-s1/95 backdrop-blur-md border border-obs-outline/15 rounded-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto p-6 lg:p-8 flex flex-col gap-5 modal-panel" id="detail-modal">
+      <!-- Header -->
+      <div class="flex items-start justify-between">
         <div>
-          <h2 id="modal-name"></h2>
-          <span id="modal-ticker" class="modal-ticker"></span>
-          <span id="modal-sector" class="modal-sector-badge"></span>
+          <h2 id="modal-name" class="text-xl font-bold font-headline"></h2>
+          <div class="flex items-center gap-2 mt-1">
+            <span id="modal-ticker" class="text-xs text-slate-500 font-mono"></span>
+            <span id="modal-sector" class="text-[10px] px-2 py-0.5 rounded bg-obs-tertiary/10 text-obs-tertiary border border-obs-tertiary/20"></span>
+          </div>
         </div>
-        <button class="modal-close" onclick="closeModal()">✕</button>
+        <button class="p-2 hover:bg-obs-s3 rounded-lg transition-colors text-slate-400 hover:text-obs-secondary" onclick="closeModal()">
+          <span class="material-symbols-outlined">close</span>
+        </button>
       </div>
 
-      <div class="modal-price-row">
-        <span id="modal-price" class="modal-price"></span>
-        <span id="modal-change" class="modal-change"></span>
+      <!-- Price -->
+      <div class="flex items-baseline gap-3">
+        <span id="modal-price" class="text-3xl font-extrabold font-headline tracking-tight"></span>
+        <span id="modal-change" class="text-lg font-semibold"></span>
       </div>
 
-      <div class="modal-meta-row">
-        <span>당일 고가: <b id="modal-day-high"></b></span>
-        <span>당일 저가: <b id="modal-day-low"></b></span>
-        <span>52주 고가: <b id="modal-52h"></b></span>
-        <span>52주 저가: <b id="modal-52l"></b></span>
-        <span>거래량: <b id="modal-vol"></b></span>
+      <!-- Meta Row -->
+      <div class="flex flex-wrap gap-4 text-xs text-slate-500 bg-obs-s2 rounded-xl p-4">
+        <span>당일 고가: <b id="modal-day-high" class="text-[#dae2fd]"></b></span>
+        <span>당일 저가: <b id="modal-day-low" class="text-[#dae2fd]"></b></span>
+        <span>52주 고가: <b id="modal-52h" class="text-[#dae2fd]"></b></span>
+        <span>52주 저가: <b id="modal-52l" class="text-[#dae2fd]"></b></span>
+        <span>거래량: <b id="modal-vol" class="text-[#dae2fd]"></b></span>
       </div>
 
-      <!-- 52주 범위 바 -->
-      <div class="range-bar-wrap">
-        <span id="modal-52l-label" class="range-label"></span>
-        <div class="range-bar">
-          <div id="modal-range-fill" class="range-fill"></div>
-          <div id="modal-range-dot" class="range-dot"></div>
+      <!-- 52-week Range Bar -->
+      <div class="flex items-center gap-3">
+        <span id="modal-52l-label" class="text-xs text-slate-500 whitespace-nowrap"></span>
+        <div class="flex-1 h-1.5 bg-obs-s3 rounded-full relative">
+          <div id="modal-range-fill" class="absolute left-0 top-0 h-full bg-obs-s4 rounded-full"></div>
+          <div id="modal-range-dot" class="absolute top-1/2 -translate-y-1/2 w-3 h-3 bg-obs-tertiary border-2 border-obs-bg rounded-full"></div>
         </div>
-        <span id="modal-52h-label" class="range-label"></span>
+        <span id="modal-52h-label" class="text-xs text-slate-500 whitespace-nowrap"></span>
       </div>
 
-      <!-- 가격 차트 -->
-      <div class="chart-wrap">
+      <!-- Price Chart -->
+      <div class="bg-obs-s2 rounded-xl p-4 h-[200px]">
         <canvas id="price-chart"></canvas>
       </div>
 
-      <!-- 지표 카드 -->
-      <div class="indicator-grid">
-        <div class="ind-card">
-          <div class="ind-label has-tip" data-tip="RSI (상대강도지수)&#10;&#10;주가 상승/하락의 속도를 0~100으로 측정합니다.&#10;&#10;• 30 이하  →  과매도 (반등 가능성)&#10;• 30~40  →  저평가 구간&#10;• 40~60  →  중립&#10;• 60~70  →  고평가 구간&#10;• 70 이상  →  과매수 (조정 가능성)&#10;&#10;기간: 14일">RSI (14) ⓘ</div>
-          <div id="ind-rsi" class="ind-value"></div>
-          <div id="ind-rsi-bar" class="rsi-bar-wrap">
-            <div class="rsi-bar-track">
-              <div id="rsi-bar-fill" class="rsi-bar-fill"></div>
-              <div id="rsi-bar-dot" class="rsi-bar-dot"></div>
+      <!-- Indicator Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div class="bg-obs-s2 rounded-xl p-4">
+          <div class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2 has-tip" data-tip="RSI (상대강도지수)&#10;&#10;주가 상승/하락의 속도를 0~100으로 측정합니다.&#10;&#10;• 30 이하  →  과매도 (반등 가능성)&#10;• 30~40  →  저평가 구간&#10;• 40~60  →  중립&#10;• 60~70  →  고평가 구간&#10;• 70 이상  →  과매수 (조정 가능성)&#10;&#10;기간: 14일">RSI (14)</div>
+          <div id="ind-rsi" class="text-2xl font-bold mb-1"></div>
+          <div id="ind-rsi-bar" class="my-2">
+            <div class="h-1 bg-obs-s4 rounded-full relative">
+              <div id="rsi-bar-fill" class="absolute left-0 top-0 h-full rounded-full"></div>
+              <div id="rsi-bar-dot" class="absolute top-1/2 -translate-y-1/2 w-2.5 h-2.5 rounded-full border-2 border-obs-bg cursor-help"></div>
             </div>
           </div>
-          <div id="ind-rsi-label" class="ind-sub"></div>
+          <div id="ind-rsi-label" class="text-xs text-slate-500"></div>
         </div>
-        <div class="ind-card">
-          <div class="ind-label has-tip" data-tip="MACD (이동평균 수렴·확산)&#10;&#10;단기(12일)와 장기(26일) 지수이동평균의 차이입니다.&#10;&#10;• 히스토그램 > 0  →  상승 모멘텀&#10;• 히스토그램 < 0  →  하락 모멘텀&#10;• MACD > Signal  →  골든크로스 (매수)&#10;• MACD < Signal  →  데드크로스 (매도)&#10;&#10;표시값: 히스토그램 (MACD - Signal)">MACD ⓘ</div>
-          <div id="ind-macd" class="ind-value"></div>
-          <div id="ind-macd-signal" class="ind-sub"></div>
-          <div id="ind-macd-hist" class="ind-sub"></div>
+        <div class="bg-obs-s2 rounded-xl p-4">
+          <div class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2 has-tip" data-tip="MACD (이동평균 수렴·확산)&#10;&#10;단기(12일)와 장기(26일) 지수이동평균의 차이입니다.&#10;&#10;• 히스토그램 > 0  →  상승 모멘텀&#10;• 히스토그램 < 0  →  하락 모멘텀&#10;• MACD > Signal  →  골든크로스 (매수)&#10;• MACD < Signal  →  데드크로스 (매도)&#10;&#10;표시값: 히스토그램 (MACD - Signal)">MACD</div>
+          <div id="ind-macd" class="text-2xl font-bold mb-1"></div>
+          <div id="ind-macd-signal" class="text-xs text-slate-500"></div>
+          <div id="ind-macd-hist" class="text-xs text-slate-500"></div>
         </div>
-        <div class="ind-card">
-          <div class="ind-label has-tip" data-tip="볼린저 밴드 (Bollinger Bands)&#10;&#10;20일 이동평균 기준 ±2σ(표준편차)로 그린&#10;가격 변동 범위입니다.&#10;&#10;• 현재가 < 하단  →  과매도 (반등 가능)&#10;• 현재가 > 상단  →  과매수 (조정 가능)&#10;• 밴드폭 수축  →  큰 변동성 예고&#10;&#10;표시값: 중간선 (20일 이동평균)">볼린저 밴드 ⓘ</div>
-          <div id="ind-bb-upper" class="ind-sub">상단: -</div>
-          <div id="ind-bb-mid" class="ind-value"></div>
-          <div id="ind-bb-lower" class="ind-sub">하단: -</div>
-          <div id="ind-bb-bw" class="ind-sub"></div>
+        <div class="bg-obs-s2 rounded-xl p-4">
+          <div class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2 has-tip" data-tip="볼린저 밴드 (Bollinger Bands)&#10;&#10;20일 이동평균 기준 ±2σ(표준편차)로 그린&#10;가격 변동 범위입니다.&#10;&#10;• 현재가 < 하단  →  과매도 (반등 가능)&#10;• 현재가 > 상단  →  과매수 (조정 가능)&#10;• 밴드폭 수축  →  큰 변동성 예고&#10;&#10;표시값: 중간선 (20일 이동평균)">볼린저 밴드</div>
+          <div id="ind-bb-upper" class="text-xs text-slate-500">상단: -</div>
+          <div id="ind-bb-mid" class="text-2xl font-bold mb-1"></div>
+          <div id="ind-bb-lower" class="text-xs text-slate-500">하단: -</div>
+          <div id="ind-bb-bw" class="text-xs text-slate-500"></div>
         </div>
       </div>
 
-      <!-- 이동평균 -->
-      <div class="ma-section">
-        <div class="ind-label has-tip" data-tip="이동평균 (MA, Moving Average)&#10;&#10;일정 기간의 평균 종가로 추세 방향을 파악합니다.&#10;&#10;• MA5   →  초단기 (1주)&#10;• MA20  →  단기 (1개월)&#10;• MA60  →  중기 (3개월)&#10;• MA120 →  장기 (6개월)&#10;&#10;현재가 > MA  →  상승 추세 (▲)&#10;MA20 > MA60  →  정배열, 강세 신호">이동평균 ⓘ</div>
-        <div class="ma-grid" id="ma-grid"></div>
+      <!-- Moving Averages -->
+      <div class="bg-obs-s2 rounded-xl p-4">
+        <div class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-3 has-tip" data-tip="이동평균 (MA, Moving Average)&#10;&#10;일정 기간의 평균 종가로 추세 방향을 파악합니다.&#10;&#10;• MA5   →  초단기 (1주)&#10;• MA20  →  단기 (1개월)&#10;• MA60  →  중기 (3개월)&#10;• MA120 →  장기 (6개월)&#10;&#10;현재가 > MA  →  상승 추세 (▲)&#10;MA20 > MA60  →  정배열, 강세 신호">이동평균</div>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3" id="ma-grid"></div>
       </div>
 
-      <!-- 신호 분석 -->
-      <div class="signal-section">
-        <div class="signal-section-header">
-          <span class="ind-label has-tip" data-tip="종합 신호&#10;&#10;RSI·MACD·볼린저밴드·이동평균을&#10;종합한 매매 참고 신호입니다.&#10;&#10;점수 기준:&#10;• ≥ +5  →  강력 매수&#10;• +2 ~ +4  →  매수&#10;• -1 ~ +1  →  중립&#10;• -4 ~ -2  →  매도&#10;• ≤ -5  →  강력 매도&#10;&#10;⚠️ 기술적 지표 기반 참고용입니다.">종합 신호 ⓘ</span>
+      <!-- Signal Section -->
+      <div class="bg-obs-s2 rounded-xl p-4">
+        <div class="flex items-center gap-3 mb-4">
+          <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider has-tip" data-tip="종합 신호&#10;&#10;RSI·MACD·볼린저밴드·이동평균을&#10;종합한 매매 참고 신호입니다.&#10;&#10;점수 기준:&#10;• ≥ +5  →  강력 매수&#10;• +2 ~ +4  →  매수&#10;• -1 ~ +1  →  중립&#10;• -4 ~ -2  →  매도&#10;• ≤ -5  →  강력 매도&#10;&#10;⚠️ 기술적 지표 기반 참고용입니다.">종합 신호</span>
           <span id="modal-signal-badge" class="signal-badge-lg"></span>
-          <span id="modal-signal-score" class="signal-score"></span>
+          <span id="modal-signal-score" class="text-xs text-slate-500"></span>
         </div>
-        <ul id="signal-reasons" class="signal-reasons"></ul>
+        <ul id="signal-reasons" class="flex flex-col gap-2"></ul>
       </div>
 
-      <!-- AI 심층 분석 -->
-      <div class="ai-analysis-section">
-        <div class="ai-analysis-header">
-          <span class="ind-label">AI 심층 분석</span>
-          <button id="ai-analysis-btn" class="ai-analysis-btn" onclick="loadAiAnalysis()">분석 시작</button>
+      <!-- AI Analysis -->
+      <div class="bg-obs-s2 rounded-xl p-4">
+        <div class="flex items-center justify-between mb-4">
+          <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">AI 심층 분석</span>
+          <button id="ai-analysis-btn" class="px-4 py-1.5 bg-gradient-to-r from-obs-primary to-emerald-400 text-[#003824] rounded-lg text-xs font-bold hover:scale-[1.02] transition-transform" onclick="loadAiAnalysis()">분석 시작</button>
         </div>
-        <div id="ai-analysis-result" class="ai-analysis-result hidden">
-          <div class="ai-opinion-row">
+        <div id="ai-analysis-result" class="hidden">
+          <div class="flex items-center gap-3 mb-4">
             <span id="ai-opinion-badge" class="ai-opinion-badge"></span>
-            <span id="ai-summary" class="ai-summary"></span>
+            <span id="ai-summary" class="text-sm text-[#dae2fd] leading-relaxed"></span>
           </div>
-          <div class="ai-cards">
-            <div class="ai-card">
-              <div class="ai-card-label">기술적 분석</div>
-              <div id="ai-technical" class="ai-card-body"></div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div class="bg-obs-s1 rounded-lg p-4">
+              <div class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">기술적 분석</div>
+              <div id="ai-technical" class="text-xs text-[#dae2fd] leading-relaxed"></div>
             </div>
-            <div class="ai-card">
-              <div class="ai-card-label">단기 전망 (1~2주)</div>
-              <div id="ai-short" class="ai-card-body"></div>
+            <div class="bg-obs-s1 rounded-lg p-4">
+              <div class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">단기 전망 (1~2주)</div>
+              <div id="ai-short" class="text-xs text-[#dae2fd] leading-relaxed"></div>
             </div>
-            <div class="ai-card">
-              <div class="ai-card-label">중기 전망 (1~3개월)</div>
-              <div id="ai-mid" class="ai-card-body"></div>
+            <div class="bg-obs-s1 rounded-lg p-4">
+              <div class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">중기 전망 (1~3개월)</div>
+              <div id="ai-mid" class="text-xs text-[#dae2fd] leading-relaxed"></div>
             </div>
-            <div class="ai-card ai-card-risk">
-              <div class="ai-card-label">리스크 요인</div>
-              <div id="ai-risks" class="ai-card-body"></div>
+            <div class="bg-obs-s1 rounded-lg p-4 border border-obs-secondary/20">
+              <div class="text-[10px] font-bold text-obs-secondary uppercase tracking-wider mb-2">리스크 요인</div>
+              <div id="ai-risks" class="text-xs text-[#dae2fd] leading-relaxed"></div>
             </div>
           </div>
-          <div id="ai-generated-at" class="ai-generated-at"></div>
+          <div id="ai-generated-at" class="text-[10px] text-slate-500 text-right mt-3"></div>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- 추천 상세 모달 -->
-  <div id="rec-modal-overlay" class="modal-overlay hidden" onclick="closeRecModal(event)">
-    <div class="modal" id="rec-modal">
-      <div class="modal-header">
+  <!-- ═══ RECOMMENDATION DETAIL MODAL ═══ -->
+  <div id="rec-modal-overlay" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-[200] flex items-center justify-center p-4 hidden" onclick="closeRecModal(event)">
+    <div class="bg-obs-s1/95 backdrop-blur-md border border-obs-outline/15 rounded-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto p-6 lg:p-8 flex flex-col gap-5 modal-panel" id="rec-modal">
+      <div class="flex items-start justify-between">
         <div>
-          <h2 id="rec-modal-name"></h2>
-          <span id="rec-modal-ticker" class="modal-ticker"></span>
-          <span id="rec-modal-sector" class="modal-sector-badge"></span>
+          <h2 id="rec-modal-name" class="text-xl font-bold font-headline"></h2>
+          <div class="flex items-center gap-2 mt-1">
+            <span id="rec-modal-ticker" class="text-xs text-slate-500 font-mono"></span>
+            <span id="rec-modal-sector" class="text-[10px] px-2 py-0.5 rounded bg-obs-tertiary/10 text-obs-tertiary border border-obs-tertiary/20"></span>
+          </div>
         </div>
-        <button class="modal-close" onclick="closeRecModal()">✕</button>
+        <button class="p-2 hover:bg-obs-s3 rounded-lg transition-colors text-slate-400 hover:text-obs-secondary" onclick="closeRecModal()">
+          <span class="material-symbols-outlined">close</span>
+        </button>
       </div>
-      <div id="rec-modal-reason" class="rec-modal-reason"></div>
-      <div class="rec-modal-grid">
-        <div class="rec-modal-card">
-          <div class="rec-modal-label">📈 증시 분석</div>
-          <div id="rec-modal-market" class="rec-modal-body"></div>
+      <div id="rec-modal-reason" class="text-sm text-obs-tertiary bg-obs-tertiary/5 border border-obs-tertiary/15 rounded-xl p-4 leading-relaxed"></div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div class="bg-obs-s2 rounded-xl p-4">
+          <div class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">증시 분석</div>
+          <div id="rec-modal-market" class="text-xs text-[#dae2fd] leading-relaxed"></div>
         </div>
-        <div class="rec-modal-card">
-          <div class="rec-modal-label">📊 기술적 지표</div>
-          <div id="rec-modal-technical" class="rec-modal-body"></div>
+        <div class="bg-obs-s2 rounded-xl p-4">
+          <div class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">기술적 지표</div>
+          <div id="rec-modal-technical" class="text-xs text-[#dae2fd] leading-relaxed"></div>
         </div>
-        <div class="rec-modal-card">
-          <div class="rec-modal-label">📰 뉴스 영향</div>
-          <div id="rec-modal-news" class="rec-modal-body"></div>
+        <div class="bg-obs-s2 rounded-xl p-4">
+          <div class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">뉴스 영향</div>
+          <div id="rec-modal-news" class="text-xs text-[#dae2fd] leading-relaxed"></div>
         </div>
-        <div class="rec-modal-card risk">
-          <div class="rec-modal-label">⚠️ 리스크 요인</div>
-          <div id="rec-modal-risk" class="rec-modal-body"></div>
+        <div class="bg-obs-s2 rounded-xl p-4 border border-obs-secondary/20">
+          <div class="text-[10px] font-bold text-obs-secondary uppercase tracking-wider mb-2">리스크 요인</div>
+          <div id="rec-modal-risk" class="text-xs text-[#dae2fd] leading-relaxed"></div>
         </div>
       </div>
-      <div class="rec-modal-footer">
-        <button id="rec-modal-chart-btn" class="rec-chart-btn" onclick="openDetailFromRec()">📊 그래프 보기</button>
+      <div class="flex justify-end mt-2">
+        <button class="px-5 py-2 bg-obs-s3 text-obs-tertiary border border-obs-tertiary/20 rounded-xl text-sm font-semibold hover:bg-obs-tertiary/10 transition-colors" onclick="openDetailFromRec()">
+          <span class="material-symbols-outlined text-sm align-middle mr-1">candlestick_chart</span>상세 분석 보기
+        </button>
       </div>
     </div>
   </div>
 
-  <!-- 글로벌 툴팁 -->
-  <div id="g-tooltip" class="g-tooltip"></div>
+  <!-- ═══ GLOBAL TOOLTIP ═══ -->
+  <div id="g-tooltip" class="fixed z-[9999] bg-obs-s3/95 backdrop-blur-md text-obs-tertiary text-xs leading-relaxed px-4 py-3 rounded-lg max-w-xs pointer-events-none whitespace-pre-line opacity-0 transition-all duration-150 translate-y-1" style="box-shadow: 0 8px 32px rgba(0,0,0,.7);"></div>
 
   <script src="/js/app.js"></script>
 </body>
