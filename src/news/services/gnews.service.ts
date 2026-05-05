@@ -8,6 +8,7 @@ export interface NewsArticle {
   url: string;
   source: string;
   publishedAt: string;
+  image?: string;
 }
 
 interface GNewsResponse {
@@ -17,6 +18,7 @@ interface GNewsResponse {
     url: string;
     source: { name: string };
     publishedAt: string;
+    image?: string;
   }[];
 }
 
@@ -51,6 +53,7 @@ export class GNewsService {
         url: a.url,
         source: a.source.name,
         publishedAt: a.publishedAt,
+        image: a.image,
       }));
     } catch (error) {
       this.logger.warn(`GNews fetch failed (${path}): ${(error as Error).message}`);
