@@ -33,7 +33,12 @@ export class GNewsService {
   }
 
   async getKoreanMarketNews(): Promise<NewsArticle[]> {
-    return this.fetch('/search', { q: 'KOSPI OR KOSDAQ OR "Korean stock"', lang: 'en', max: 5 });
+    return this.fetch('/search', {
+      q: '코스피 OR 코스닥 OR 주식시장 OR 증시',
+      lang: 'ko',
+      country: 'kr',
+      max: 5,
+    });
   }
 
   async getGlobalNews(): Promise<NewsArticle[]> {
