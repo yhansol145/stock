@@ -13,7 +13,7 @@
 - **시장 지수 조회** - KOSPI, KOSDAQ, KOSPI200 지수 및 시장 개장 여부
 - **종목 검색** - 종목명 regex 검색 지원
 - **시장 뉴스** - GNews API를 통한 한국 증시 뉴스 및 글로벌 이슈 제공
-- **AI 종목 추천** - Groq LLM(LLaMA 3.3 70B)이 주가 데이터 + 뉴스를 종합 분석하여 투자 유망 종목 9개 추천
+- **AI 종목 추천** - Gemini가 주가 데이터 + 뉴스를 종합 분석하여 투자 유망 종목 9개 추천
 - **AI 심층 분석** - 개별 종목에 대한 AI 기반 상세 투자 분석 제공
 - **웹 대시보드** - 주가, 지표, 뉴스, AI 추천을 한눈에 볼 수 있는 UI
 
@@ -27,7 +27,7 @@
 - **HTTP Client:** Axios
 - **Technical Analysis:** technicalindicators
 - **News:** GNews API
-- **AI:** Groq API (LLaMA 3.3 70B)
+- **AI:** Groq API (gpt-oss-120b) + Google Gemini
 - **Config:** @nestjs/config
 
 ## 환경 변수
@@ -37,6 +37,7 @@
 ```
 GNEWS_API_KEY=your_gnews_api_key
 GROQ_API_KEY=your_groq_api_key
+GROQ_MODEL=openai/gpt-oss-120b   # 선택, 기본값 openai/gpt-oss-120b
 UPSTASH_REDIS_REST_URL=your_upstash_redis_url      # Vercel 배포 시 필요
 UPSTASH_REDIS_REST_TOKEN=your_upstash_redis_token  # Vercel 배포 시 필요
 ```
@@ -132,6 +133,7 @@ npm start
 | `UPSTASH_REDIS_REST_TOKEN` | Upstash REST Token |
 | `GNEWS_API_KEY`            | GNews API 키        |
 | `GROQ_API_KEY`             | Groq API 키         |
+| `GROQ_MODEL`               | Groq 모델 (기본 `openai/gpt-oss-120b`) |
 
 
 ### 첫 배포 후 캐시 초기화

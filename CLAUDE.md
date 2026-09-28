@@ -2,7 +2,7 @@
 
 ## 프로젝트 개요
 
-한국 주식시장(KOSPI/KOSDAQ) 실시간 분석 플랫폼. Yahoo Finance에서 100개 주요 종목 데이터를 수집하고, 기술적 지표를 계산하며, Groq LLaMA 3.3 70B AI로 투자 분석/추천을 제공한다.
+한국 주식시장(KOSPI/KOSDAQ) 실시간 분석 플랫폼. Yahoo Finance에서 100개 주요 종목 데이터를 수집하고, 기술적 지표를 계산하며, Groq LLM(gpt-oss-120b)으로 투자 분석/추천을 제공한다.
 
 - **버전:** 1.0.6
 - **서버 포트:** 3000 (hardcoded in `src/main.ts`)
@@ -16,7 +16,7 @@
 |------|------|
 | 프레임워크 | NestJS 10.x |
 | 언어 | TypeScript 5.x (strict mode) |
-| AI/LLM | Groq SDK (LLaMA 3.3 70B), Google Gemini (설정됨, 미사용) |
+| AI/LLM | Groq SDK (gpt-oss-120b, `GROQ_MODEL`로 변경 가능) — AI 분석·뉴스 번역, Google Gemini — AI 추천 |
 | 주가 데이터 | Yahoo Finance API (비공식, axios) |
 | 뉴스 | GNews API |
 | 기술 지표 | `technicalindicators` 라이브러리 |
@@ -119,7 +119,8 @@ StockController → GetStockDetailUseCase
 ```
 GNEWS_API_KEY=    # gnews.io (무료: 100 req/day)
 GROQ_API_KEY=     # console.groq.com (무료)
-GEMINI_API_KEY=   # Google Gemini (설정됨, 현재 미사용)
+GROQ_MODEL=       # 선택, 기본 openai/gpt-oss-120b
+GEMINI_API_KEY=   # Google Gemini (AI 추천에 사용)
 ```
 
 ---

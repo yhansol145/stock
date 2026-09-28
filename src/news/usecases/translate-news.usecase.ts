@@ -28,7 +28,13 @@ Output ONLY the translated lines, nothing else.
 
 ${numbered}`;
 
-    const raw = await this.groqService.generateText(prompt);
+    let raw: string;
+    try {
+      raw = await this.groqService.generateText(prompt);
+    } catch (err) {
+      this.logger.error('Groq 번역 실패 — 원문 반환', err);
+      return articles;
+    }
 
     // 줄 단위 파싱 — JSON 의존 제거
     const lines = raw
